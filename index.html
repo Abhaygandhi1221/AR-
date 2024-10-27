@@ -1,19 +1,65 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>AR QR Code Example</title>
+    <title>Floating Island City AR</title>
     <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
-    <script src="https://raw.githack.com/AR-js-org/AR.js/3.3.2/aframe/build/aframe-ar.js"></script>
+    <script src="https://cdn.rawgit.com/jeromeetienne/AR.js/master/aframe/build/aframe-ar.js"></script>
 </head>
 <body style="margin: 0; overflow: hidden;">
+
+    <!-- AR Scene -->
     <a-scene embedded arjs>
-        <!-- QR Code Marker -->
-        <a-marker type="pattern" url="code.patt">
-            <!-- 3D Sphere Object -->
-            <a-sphere color="blue" radius="0.2" position="0 0.2 0"></a-sphere>
+        <!-- Marker for the AR Object -->
+        <a-marker preset="hiro">
+            <!-- 3D Model of the Floating Island -->
+            <a-entity id="floatingCity" 
+                      position="0 0.5 0" 
+                      rotation="0 0 0" 
+                      scale="0.5 0.5 0.5" 
+                      gltf-model="#cityModel" 
+                      gesture-handler>
+            </a-entity>
         </a-marker>
 
         <a-entity camera></a-entity>
     </a-scene>
+
+    <!-- Include the Model and Gesture Script -->
+    <script>
+        // Load the 3D Model
+        AFRAME.registerComponent('gesture-handler', {
+            init: function () {
+                const el = this.el;
+                let isRotating = false;
+                
+                el.addEventListener('click', () => {
+                    isRotating = !isRotating;
+                });
+
+                el.addEventListener('mousedown', () => {
+                    isRotating = true;
+                });
+
+                el.addEventListener('mouseup', () => {
+                    isRotating = false;
+                });
+
+                el.addEventListener('touchstart', () => {
+                    isRotating = true;
+                });
+
+                el.addEventListener('touchend', () => {
+                    isRotating = false;
+                });
+
+                this.el.sceneEl.addEventListener('tick', () => {
+                    if (isRotating) {
+                        el.object3D.rotation.y += 0.01;
+                    }
+                });
+            }
+        });
+    </script>
+
 </body>
 </html>
