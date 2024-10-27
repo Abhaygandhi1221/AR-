@@ -8,9 +8,9 @@
 <body style="margin: 0; overflow: hidden;">
 
     <!-- AR Scene -->
-    <a-scene embedded arjs>
+    <a-scene embedded arjs="sourceType: webcam;">
         <!-- Marker for the AR Object -->
-        <a-marker preset="pattern-abhaym.patt">
+        <a-marker preset="custom" type="pattern" url="abhaym.patt">
             <!-- 3D Model of the Floating Island -->
             <a-entity id="floatingCity" 
                       position="0 0.5 0" 
@@ -26,25 +26,20 @@
 
     <!-- Include the Model and Gesture Script -->
     <script>
-        // Load the 3D Model
+        // Gesture Handler Component for Touchscreen Devices
         AFRAME.registerComponent('gesture-handler', {
             init: function () {
                 const el = this.el;
                 let isRotating = false;
-                
+
+                // Toggle Rotation on Tap
                 el.addEventListener('click', () => {
                     isRotating = !isRotating;
                 });
 
-                el.addEventListener('mousedown', () => {
-                    isRotating = true;
-                });
-
-                el.addEventListener('mouseup', () => {
-                    isRotating = false;
-                });
-
-                el.addEventListener('touchstart', () => {
+                // Touch Events for Continuous Rotation
+                el.addEventListener('touchstart', (e) => {
+                    e.preventDefault();  // Prevents default touch behavior
                     isRotating = true;
                 });
 
@@ -52,9 +47,10 @@
                     isRotating = false;
                 });
 
+                // Rotate the Object When Active
                 this.el.sceneEl.addEventListener('tick', () => {
                     if (isRotating) {
-                        el.object3D.rotation.y += 0.01;
+                        el.object3D.rotation.y += 0.02;
                     }
                 });
             }
