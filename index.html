@@ -11,51 +11,12 @@
     <a-scene embedded arjs="sourceType: webcam;">
         <!-- Marker for the AR Object -->
         <a-marker type="pattern" url="pattern-abhaym.patt">
-            <!-- 3D Model of the Floating Island -->
-            <a-entity id="floatingCity" 
-                      position="0 0.5 0" 
-                      rotation="0 0 0" 
-                      scale="0.5 0.5 0.5" 
-                      gltf-model="#cityModel" 
-                      gesture-handler>
-            </a-entity>
+            <!-- Temporary Red Box to Test -->
+            <a-entity geometry="primitive: box" material="color: red" position="0 0.5 0" scale="0.5 0.5 0.5"></a-entity>
         </a-marker>
 
         <a-entity camera></a-entity>
     </a-scene>
-
-    <!-- Include the Model and Gesture Script -->
-    <script>
-        // Gesture Handler Component for Touchscreen Devices
-        AFRAME.registerComponent('gesture-handler', {
-            init: function () {
-                const el = this.el;
-                let isRotating = false;
-
-                // Toggle Rotation on Tap
-                el.addEventListener('click', () => {
-                    isRotating = !isRotating;
-                });
-
-                // Touch Events for Continuous Rotation
-                el.addEventListener('touchstart', (e) => {
-                    e.preventDefault();  // Prevents default touch behavior
-                    isRotating = true;
-                });
-
-                el.addEventListener('touchend', () => {
-                    isRotating = false;
-                });
-
-                // Rotate the Object When Active
-                this.el.sceneEl.addEventListener('tick', () => {
-                    if (isRotating) {
-                        el.object3D.rotation.y += 0.02;
-                    }
-                });
-            }
-        });
-    </script>
 
 </body>
 </html>
