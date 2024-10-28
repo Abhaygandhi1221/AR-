@@ -61,31 +61,82 @@
     <!-- Gesture Handler Script -->
     <script>
         AFRAME.registerComponent('gesture-handler', {
+            schema: {
+                scale: {default: 1.0}
+            },
             init: function () {
-                const el = this.el;
-                let isInteracting = false;
+                this.isDragging = false;
+                this.startPosition = {x: 0, y: 0};
+                this.startScale = 1.0;
+                this.currentScale = this.data.scale;
 
-                // Toggle rotation on click or touch
-                el.addEventListener('click', () => {
-                    isInteracting = !isInteracting;
-                });
+                // Enable dragging
+                this.el.addEventListener('mousedown', this.startDrag.bind(this));
+                this.el.addEventListener('mousemove', this.drag.bind(this));
+                this.el.addEventListener('mouseup', this.endDrag.bind(this));
+                
+                this.el.addEventListener('touchstart', this.startTouch.bind(this));
+                this.el.addEventListener('touchmove', this.touchMove.bind(this));
+                this.el.addEventListener('touchend', this.endDrag.bind(this));
+            },
 
-                el.addEventListener('touchstart', (e) => {
-                    e.preventDefault();
-                    isInteracting = true;
-                });
+            startDrag: function (evt) {
+                this.isDragging = true;
+                this.startPosition = {x: evt.screenX, y: evt.screenY};
+            },
 
-                el.addEventListener('touchend', () => {
-                    isInteracting = false;
-                });
+            drag: function (evt) {
+                if (!this.isDragging) return;
 
-                // Continuous interaction when activated
-                this.el.sceneEl.addEventListener('tick', () => {
-                    if (isInteracting) {
-                        el.object3D.rotation.y += 0.02;  // Rotate around the Y-axis
-                        el.object3D.position.y += Math.sin(Date.now() * 0.002) * 0.005; // Floating effect
-                    }
-                });
+                let deltaX = evt.screenX - this.startPosition.x;
+                let deltaY = evt.screenY - this.startPosition.y;
+                
+                this.el.object3D.position.x += deltaX * 0.001;
+                this.el.object3D.position.y -= deltaY * 0.001;
+
+                this.startPosition = {x: evt.screenX, y: evt.screenY};
+            },
+
+            startTouch: function (evt) {
+                this.isDragging = true;
+                if (evt.touches.length === 1) {
+                    // Single touch for drag
+                    this.startPosition = {x: evt.touches[0].clientX, y: evt.touches[0].clientY};
+                } else if (evt.touches.length === 2) {
+                    // Two-finger pinch for zoom
+                    this.startScale = this.currentScale;
+                    this.initialDistance = this.getTouchDistance(evt.touches);
+                }
+            },
+
+            touchMove: function (evt) {
+                if (!this.isDragging) return;
+
+                if (evt.touches.length === 1) {
+                    // Dragging with one finger
+                    let deltaX = evt.touches[0].clientX - this.startPosition.x;
+                    let deltaY = evt.touches[0].clientY - this.startPosition.y;
+
+                    this.el.object3D.position.x += deltaX * 0.001;
+                    this.el.object3D.position.y -= deltaY * 0.001;
+
+                    this.startPosition = {x: evt.touches[0].clientX, y: evt.touches[0].clientY};
+                } else if (evt.touches.length === 2) {
+                    // Pinch-to-zoom with two fingers
+                    let currentDistance = this.getTouchDistance(evt.touches);
+                    this.currentScale = this.startScale * (currentDistance / this.initialDistance);
+                    this.el.object3D.scale.set(this.currentScale, this.currentScale, this.currentScale);
+                }
+            },
+
+            endDrag: function () {
+                this.isDragging = false;
+            },
+
+            getTouchDistance: function (touches) {
+                const dx = touches[0].clientX - touches[1].clientX;
+                const dy = touches[0].clientY - touches[1].clientY;
+                return Math.sqrt(dx * dx + dy * dy);
             }
         });
     </script>
