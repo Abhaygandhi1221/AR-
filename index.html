@@ -2,10 +2,9 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Basic Interactive AR Test</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Basic A-Frame Interaction Test</title>
     <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/aframe/build/aframe-ar.js"></script>
 
     <!-- Basic Gesture Control Script for Testing -->
     <script>
@@ -27,23 +26,8 @@
         });
     </script>
 </head>
-<body style="margin: 0; overflow: hidden;">
-    <a-scene embedded arjs>
-        <!-- Lighting for better visibility -->
-        <a-light type="ambient" color="#ffffff" intensity="0.5"></a-light>
-        <a-light type="directional" position="2 4 5" intensity="1"></a-light>
-
-        <!-- Custom Marker for AR objects -->
-        <a-marker type="pattern" url="pattern-marker.patt">
-            <!-- Single Box with texture and click-to-zoom interaction -->
-            <a-box id="test-box" position="0 0.5 0" depth="0.5" height="0.5" width="0.5"
-                   material="color: blue" 
-                   gesture-handler>
-            </a-box>
-        </a-marker>
-
-        <!-- Camera -->
-        <a-entity camera></a-entity>
-    </a-scene>
-</body>
-</html>
+<body style="margin: 0;">
+    <a-scene>
+        <!-- Simple Box with Click-to-Zoom Interaction -->
+        <a-box id="test-box" position="0 1.25 -3" depth="1" height="1" width="1"
+               color="
