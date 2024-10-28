@@ -58,79 +58,79 @@
 
     </a-scene>
 
-    <!-- Gesture Handler Script -->
+    <!-- Simplified Gesture Handler Script -->
     <script>
         AFRAME.registerComponent('gesture-handler', {
-            schema: {
-                scale: {default: 1.0}
-            },
             init: function () {
                 this.isDragging = false;
-                this.startPosition = {x: 0, y: 0};
-                this.startScale = 1.0;
-                this.currentScale = this.data.scale;
+                this.startPosition = null;
+                this.initialScale = this.el.object3D.scale.clone();
+                this.isPinching = false;
 
-                // Enable dragging
-                this.el.addEventListener('mousedown', this.startDrag.bind(this));
-                this.el.addEventListener('mousemove', this.drag.bind(this));
-                this.el.addEventListener('mouseup', this.endDrag.bind(this));
+                // Add event listeners for drag and zoom
+                this.el.addEventListener('mousedown', (evt) => this.startDrag(evt));
+                this.el.addEventListener('mousemove', (evt) => this.drag(evt));
+                this.el.addEventListener('mouseup', () => this.endDrag());
                 
-                this.el.addEventListener('touchstart', this.startTouch.bind(this));
-                this.el.addEventListener('touchmove', this.touchMove.bind(this));
-                this.el.addEventListener('touchend', this.endDrag.bind(this));
+                this.el.addEventListener('touchstart', (evt) => this.startTouch(evt));
+                this.el.addEventListener('touchmove', (evt) => this.touchMove(evt));
+                this.el.addEventListener('touchend', () => this.endDrag());
             },
 
             startDrag: function (evt) {
                 this.isDragging = true;
-                this.startPosition = {x: evt.screenX, y: evt.screenY};
+                this.startPosition = {x: evt.clientX, y: evt.clientY};
             },
 
             drag: function (evt) {
                 if (!this.isDragging) return;
-
-                let deltaX = evt.screenX - this.startPosition.x;
-                let deltaY = evt.screenY - this.startPosition.y;
+                const deltaX = (evt.clientX - this.startPosition.x) * 0.01;
+                const deltaY = (evt.clientY - this.startPosition.y) * 0.01;
                 
-                this.el.object3D.position.x += deltaX * 0.001;
-                this.el.object3D.position.y -= deltaY * 0.001;
+                this.el.object3D.position.x += deltaX;
+                this.el.object3D.position.y -= deltaY;
 
-                this.startPosition = {x: evt.screenX, y: evt.screenY};
+                this.startPosition = {x: evt.clientX, y: evt.clientY};
             },
 
             startTouch: function (evt) {
-                this.isDragging = true;
                 if (evt.touches.length === 1) {
-                    // Single touch for drag
+                    // Single finger for dragging
+                    this.isDragging = true;
                     this.startPosition = {x: evt.touches[0].clientX, y: evt.touches[0].clientY};
                 } else if (evt.touches.length === 2) {
-                    // Two-finger pinch for zoom
-                    this.startScale = this.currentScale;
+                    // Two fingers for pinch-to-zoom
+                    this.isPinching = true;
                     this.initialDistance = this.getTouchDistance(evt.touches);
                 }
             },
 
             touchMove: function (evt) {
-                if (!this.isDragging) return;
-
-                if (evt.touches.length === 1) {
+                if (this.isDragging && evt.touches.length === 1) {
                     // Dragging with one finger
-                    let deltaX = evt.touches[0].clientX - this.startPosition.x;
-                    let deltaY = evt.touches[0].clientY - this.startPosition.y;
+                    const deltaX = (evt.touches[0].clientX - this.startPosition.x) * 0.01;
+                    const deltaY = (evt.touches[0].clientY - this.startPosition.y) * 0.01;
 
-                    this.el.object3D.position.x += deltaX * 0.001;
-                    this.el.object3D.position.y -= deltaY * 0.001;
+                    this.el.object3D.position.x += deltaX;
+                    this.el.object3D.position.y -= deltaY;
 
                     this.startPosition = {x: evt.touches[0].clientX, y: evt.touches[0].clientY};
-                } else if (evt.touches.length === 2) {
+                } else if (this.isPinching && evt.touches.length === 2) {
                     // Pinch-to-zoom with two fingers
-                    let currentDistance = this.getTouchDistance(evt.touches);
-                    this.currentScale = this.startScale * (currentDistance / this.initialDistance);
-                    this.el.object3D.scale.set(this.currentScale, this.currentScale, this.currentScale);
+                    const currentDistance = this.getTouchDistance(evt.touches);
+                    const scaleChange = currentDistance / this.initialDistance;
+
+                    this.el.object3D.scale.set(
+                        this.initialScale.x * scaleChange,
+                        this.initialScale.y * scaleChange,
+                        this.initialScale.z * scaleChange
+                    );
                 }
             },
 
             endDrag: function () {
                 this.isDragging = false;
+                this.isPinching = false;
             },
 
             getTouchDistance: function (touches) {
