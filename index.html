@@ -2,32 +2,123 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Basic A-Frame Interaction Test</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Interactive AR Scene with Car, Building, and Drone</title>
     <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/aframe/build/aframe-ar.js"></script>
 
-    <!-- Basic Gesture Control Script for Testing -->
+    <!-- Interaction Component Script -->
     <script>
-        AFRAME.registerComponent('gesture-handler', {
+        AFRAME.registerComponent('rotate-and-zoom', {
             init: function () {
                 const el = this.el;
-                let isScaledUp = false;
+                let isDragging = false;
+                let initialScale = el.object3D.scale.clone();
+                let initialRotation = el.object3D.rotation.clone();
+                let startX = 0, startY = 0;
 
-                // Toggle scale on click to simulate zoom
-                el.addEventListener('click', function () {
-                    if (isScaledUp) {
-                        el.object3D.scale.set(1, 1, 1);  // Reset to original scale
-                    } else {
-                        el.object3D.scale.set(1.5, 1.5, 1.5);  // Scale up
+                // Drag Rotation
+                el.addEventListener('mousedown', (evt) => {
+                    isDragging = true;
+                    startX = evt.clientX;
+                    startY = evt.clientY;
+                });
+
+                el.addEventListener('mousemove', (evt) => {
+                    if (isDragging) {
+                        const deltaX = (evt.clientX - startX) * 0.005;
+                        const deltaY = (evt.clientY - startY) * 0.005;
+                        el.object3D.rotation.y += deltaX;
+                        el.object3D.rotation.x += deltaY;
+                        startX = evt.clientX;
+                        startY = evt.clientY;
                     }
-                    isScaledUp = !isScaledUp;
+                });
+
+                el.addEventListener('mouseup', () => isDragging = false);
+
+                // Touch Rotation
+                el.addEventListener('touchstart', (evt) => {
+                    if (evt.touches.length === 1) {
+                        isDragging = true;
+                        startX = evt.touches[0].clientX;
+                        startY = evt.touches[0].clientY;
+                    }
+                });
+
+                el.addEventListener('touchmove', (evt) => {
+                    if (isDragging && evt.touches.length === 1) {
+                        const deltaX = (evt.touches[0].clientX - startX) * 0.005;
+                        const deltaY = (evt.touches[0].clientY - startY) * 0.005;
+                        el.object3D.rotation.y += deltaX;
+                        el.object3D.rotation.x += deltaY;
+                        startX = evt.touches[0].clientX;
+                        startY = evt.touches[0].clientY;
+                    }
+                });
+
+                el.addEventListener('touchend', () => isDragging = false);
+
+                // Zoom with Wheel or Pinch
+                window.addEventListener('wheel', (event) => {
+                    const scaleChange = event.deltaY > 0 ? 0.9 : 1.1;
+                    el.object3D.scale.multiplyScalar(scaleChange);
+                });
+
+                // Reset on Double Click or Double Tap
+                el.addEventListener('dblclick', () => {
+                    el.object3D.scale.copy(initialScale);
+                    el.object3D.rotation.copy(initialRotation);
+                });
+
+                let lastTap = 0;
+                el.addEventListener('touchstart', (evt) => {
+                    const currentTime = new Date().getTime();
+                    if (currentTime - lastTap < 300) {  // Double tap detection
+                        el.object3D.scale.copy(initialScale);
+                        el.object3D.rotation.copy(initialRotation);
+                    }
+                    lastTap = currentTime;
                 });
             }
         });
     </script>
 </head>
-<body style="margin: 0;">
-    <a-scene>
-        <!-- Simple Box with Click-to-Zoom Interaction -->
-        <a-box id="test-box" position="0 1.25 -3" depth="1" height="1" width="1"
-               color="
+<body style="margin: 0; overflow: hidden;">
+    <a-scene embedded arjs>
+        <a-assets>
+            <img id="buildingTexture" src="building.jpg" crossorigin="anonymous" />
+            <img id="carTexture" src="car.jpg" crossorigin="anonymous" />
+            <img id="droneTexture" src="drone.jpg" crossorigin="anonymous" />
+        </a-assets>
+
+        <!-- Lighting for better visibility -->
+        <a-light type="ambient" color="#ffffff" intensity="0.5"></a-light>
+        <a-light type="directional" position="2 4 5" intensity="1"></a-light>
+
+        <!-- Marker for AR objects -->
+        <a-marker type="pattern" url="pattern-marker.patt">
+            <!-- Building -->
+            <a-box id="building" position="0 0.5 0" depth="0.5" height="1.5" width="0.5"
+                   material="src: #buildingTexture" 
+                   rotate-and-zoom>
+            </a-box>
+
+            <!-- Car -->
+            <a-box id="car" position="1 0.3 -0.5" depth="0.3" height="0.3" width="0.6"
+                   material="src: #carTexture" 
+                   rotate-and-zoom>
+            </a-box>
+
+            <!-- Drone (Sphere) -->
+            <a-sphere id="drone" position="0 1.2 -0.5" radius="0.2"
+                      material="src: #droneTexture" 
+                      rotate-and-zoom>
+            </a-sphere>
+        </a-marker>
+
+        <!-- Camera -->
+        <a-entity camera></a-entity>
+    </a-scene>
+</body>
+</html>
