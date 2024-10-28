@@ -6,47 +6,53 @@
     <title>Interactive Floating City AR</title>
     <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/aframe/build/aframe-ar.js"></script>
-    <script src="https://unpkg.com/aframe-drag-look-controls-component/dist/aframe-drag-look-controls-component.min.js"></script>
 
-    <!-- Gesture and Zoom Control Scripts -->
+    <!-- Basic Gesture and Zoom Control Scripts -->
     <script>
         AFRAME.registerComponent('gesture-handler', {
             init: function () {
-                var el = this.el;
+                const el = this.el;
 
                 // Click to toggle rotation speed
                 el.addEventListener('click', function () {
-                    var currentSpeed = el.getAttribute('animation').dur;
-                    var newSpeed = currentSpeed === "10000" ? "2000" : "10000";
+                    const currentSpeed = el.getAttribute('animation').dur;
+                    const newSpeed = currentSpeed === "10000" ? "3000" : "10000";
                     el.setAttribute('animation', 'dur', newSpeed);
-                });
-
-                // Hover effect
-                el.addEventListener('mouseenter', function () {
-                    el.setAttribute('material', 'color', '#FFFF00');
-                });
-
-                el.addEventListener('mouseleave', function () {
-                    el.setAttribute('material', 'color', el.id === "building" ? '#FFA500' : '');
                 });
             }
         });
 
-        // Zoom Component
         AFRAME.registerComponent('zoom-control', {
             init: function () {
-                var camera = this.el;
-                var zoomLevel = 1;
+                const camera = this.el;
+                let zoomLevel = 1;
 
+                // Wheel event for zoom
                 window.addEventListener('wheel', function (event) {
-                    if (event.deltaY > 0) {
-                        zoomLevel += 0.1; // Zoom out
-                    } else {
-                        zoomLevel -= 0.1; // Zoom in
-                    }
-
-                    zoomLevel = Math.min(Math.max(zoomLevel, 0.5), 3); // Set min and max zoom levels
+                    zoomLevel += event.deltaY * -0.01;
+                    zoomLevel = Math.min(Math.max(zoomLevel, 0.5), 2); // Limit zoom
                     camera.setAttribute('camera', 'zoom', zoomLevel);
+                });
+
+                // Touch zoom for mobile
+                let initialDistance = null;
+                window.addEventListener('touchmove', function (event) {
+                    if (event.touches.length === 2) {
+                        const dx = event.touches[0].clientX - event.touches[1].clientX;
+                        const dy = event.touches[0].clientY - event.touches[1].clientY;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+
+                        if (initialDistance) {
+                            zoomLevel += (distance - initialDistance) * 0.001;
+                            zoomLevel = Math.min(Math.max(zoomLevel, 0.5), 2);
+                            camera.setAttribute('camera', 'zoom', zoomLevel);
+                        }
+                        initialDistance = distance;
+                    }
+                });
+
+                window.addEventListener('touchend', function () {
+                    initialDistance = null;
                 });
             }
         });
@@ -54,45 +60,43 @@
 </head>
 <body style="margin: 0; overflow: hidden;">
     <a-scene embedded arjs>
-        <!-- Lighting for the Scene -->
+        <!-- Lighting for better visibility -->
         <a-light type="ambient" color="#ffffff" intensity="0.5"></a-light>
-        <a-light type="directional" position="2 4 5" intensity="1" castShadow="true"></a-light>
+        <a-light type="directional" position="2 4 5" intensity="1"></a-light>
 
-        <!-- Custom Pattern Marker -->
-        <a-marker type="pattern" url="pattern-Office-reg.patt">
-            
-            <!-- Building with Rotation -->
+        <!-- Custom Marker for AR objects -->
+        <a-marker type="pattern" url="pattern-marker.patt">
+            <!-- Building with texture and rotation -->
             <a-box id="building" position="0 0.5 0" depth="0.5" height="1.5" width="0.5"
-                   material="src: #buildingTexture; shader: standard;" 
+                   material="src: #buildingTexture" 
                    animation="property: rotation; to: 0 360 0; loop: true; dur: 10000"
                    gesture-handler>
             </a-box>
 
-            <!-- Car 1 with Rotation -->
+            <!-- Car 1 with texture and rotation -->
             <a-box id="car1" position="1 0.3 -0.5" depth="0.3" height="0.3" width="0.6"
-                   material="src: #car1Texture; shader: standard;" 
+                   material="src: #car1Texture" 
                    animation="property: rotation; to: 0 360 0; loop: true; dur: 8000"
                    gesture-handler>
             </a-box>
 
-            <!-- Car 2 with Rotation -->
+            <!-- Car 2 with texture and rotation -->
             <a-box id="car2" position="-1 0.3 -0.5" depth="0.3" height="0.3" width="0.6"
-                   material="src: #car2Texture; shader: standard;" 
+                   material="src: #car2Texture" 
                    animation="property: rotation; to: 0 360 0; loop: true; dur: 12000"
                    gesture-handler>
             </a-box>
 
-            <!-- Drone (Sphere) with Rotation -->
+            <!-- Drone (Sphere) with texture and rotation -->
             <a-sphere id="drone" position="0 1.2 -0.5" radius="0.2"
-                      material="src: #droneTexture; shader: standard;" 
+                      material="src: #droneTexture" 
                       animation="property: rotation; to: 0 360 0; loop: true; dur: 15000"
                       gesture-handler>
             </a-sphere>
-
         </a-marker>
 
-        <!-- Camera with Zoom and Drag Controls -->
-        <a-entity camera zoom-control look-controls drag-look-controls></a-entity>
+        <!-- Camera with zoom control -->
+        <a-entity camera zoom-control></a-entity>
 
         <!-- Assets for textures -->
         <a-assets>
