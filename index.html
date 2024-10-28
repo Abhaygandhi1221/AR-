@@ -4,27 +4,29 @@
     <title>Interactive Floating City AR</title>
     <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/aframe/build/aframe-ar.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 <body style="margin: 0; overflow: hidden;">
 
     <a-scene embedded arjs>
         <!-- Marker for the AR Object -->
         <a-marker type="pattern" url="pattern-marker.patt">
-            <!-- 3D Model of the Floating Island -->
-            <a-entity id="floatingCity" 
+            <!-- Floating Island as a Textured Sphere -->
+            <a-sphere id="floatingCity" 
                       position="0 0.5 0" 
+                      radius="1" 
                       rotation="0 0 0" 
                       scale="0.5 0.5 0.5" 
-                      gltf-model="#cityModel" 
+                      src="#islandTexture" 
                       gesture-handler>
-            </a-entity>
+            </a-sphere>
         </a-marker>
 
         <a-entity camera></a-entity>
 
-        <!-- Include the 3D Model -->
+        <!-- Include the Texture as an Asset -->
         <a-assets>
-            <a-asset-item id="cityModel" src="island.jpg"></a-asset-item>
+            <img id="islandTexture" src="island.jpg" crossorigin="anonymous">
         </a-assets>
 
     </a-scene>
