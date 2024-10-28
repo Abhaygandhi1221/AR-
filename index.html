@@ -1,117 +1,106 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Interactive Floating City AR</title>
     <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/aframe/build/aframe-ar.js"></script>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://unpkg.com/aframe-drag-look-controls-component/dist/aframe-drag-look-controls-component.min.js"></script>
+
+    <!-- Gesture and Zoom Control Scripts -->
+    <script>
+        AFRAME.registerComponent('gesture-handler', {
+            init: function () {
+                var el = this.el;
+
+                // Click to toggle rotation speed
+                el.addEventListener('click', function () {
+                    var currentSpeed = el.getAttribute('animation').dur;
+                    var newSpeed = currentSpeed === "10000" ? "2000" : "10000";
+                    el.setAttribute('animation', 'dur', newSpeed);
+                });
+
+                // Hover effect
+                el.addEventListener('mouseenter', function () {
+                    el.setAttribute('material', 'color', '#FFFF00');
+                });
+
+                el.addEventListener('mouseleave', function () {
+                    el.setAttribute('material', 'color', el.id === "building" ? '#FFA500' : '');
+                });
+            }
+        });
+
+        // Zoom Component
+        AFRAME.registerComponent('zoom-control', {
+            init: function () {
+                var camera = this.el;
+                var zoomLevel = 1;
+
+                window.addEventListener('wheel', function (event) {
+                    if (event.deltaY > 0) {
+                        zoomLevel += 0.1; // Zoom out
+                    } else {
+                        zoomLevel -= 0.1; // Zoom in
+                    }
+
+                    zoomLevel = Math.min(Math.max(zoomLevel, 0.5), 3); // Set min and max zoom levels
+                    camera.setAttribute('camera', 'zoom', zoomLevel);
+                });
+            }
+        });
+    </script>
 </head>
 <body style="margin: 0; overflow: hidden;">
-
     <a-scene embedded arjs>
-        <!-- Marker for the AR Objects -->
-        <a-marker type="pattern" url="pattern-marker.patt">
+        <!-- Lighting for the Scene -->
+        <a-light type="ambient" color="#ffffff" intensity="0.5"></a-light>
+        <a-light type="directional" position="2 4 5" intensity="1" castShadow="true"></a-light>
 
-            <!-- Building -->
-            <a-box id="building"
-                   position="0 0.5 0"
-                   depth="0.5" height="1.5" width="0.5"
-                   src="#buildingTexture"
-                   simple-gesture-handler>
+        <!-- Custom Pattern Marker -->
+        <a-marker type="pattern" url="pattern-Office-reg.patt">
+            
+            <!-- Building with Rotation -->
+            <a-box id="building" position="0 0.5 0" depth="0.5" height="1.5" width="0.5"
+                   material="src: #buildingTexture; shader: standard;" 
+                   animation="property: rotation; to: 0 360 0; loop: true; dur: 10000"
+                   gesture-handler>
             </a-box>
 
-            <!-- Car 1 -->
-            <a-box id="car1"
-                   position="0.8 0.3 -0.5"
-                   depth="0.3" height="0.3" width="0.6"
-                   src="#car1Texture"
-                   simple-gesture-handler>
+            <!-- Car 1 with Rotation -->
+            <a-box id="car1" position="1 0.3 -0.5" depth="0.3" height="0.3" width="0.6"
+                   material="src: #car1Texture; shader: standard;" 
+                   animation="property: rotation; to: 0 360 0; loop: true; dur: 8000"
+                   gesture-handler>
             </a-box>
 
-            <!-- Car 2 -->
-            <a-box id="car2"
-                   position="-0.8 0.3 -0.5"
-                   depth="0.3" height="0.3" width="0.6"
-                   src="#car2Texture"
-                   simple-gesture-handler>
+            <!-- Car 2 with Rotation -->
+            <a-box id="car2" position="-1 0.3 -0.5" depth="0.3" height="0.3" width="0.6"
+                   material="src: #car2Texture; shader: standard;" 
+                   animation="property: rotation; to: 0 360 0; loop: true; dur: 12000"
+                   gesture-handler>
             </a-box>
 
-            <!-- Drone (Sphere) -->
-            <a-sphere id="drone"
-                      position="0 1.2 -0.5"
-                      radius="0.2"
-                      src="#droneTexture"
-                      simple-gesture-handler>
+            <!-- Drone (Sphere) with Rotation -->
+            <a-sphere id="drone" position="0 1.2 -0.5" radius="0.2"
+                      material="src: #droneTexture; shader: standard;" 
+                      animation="property: rotation; to: 0 360 0; loop: true; dur: 15000"
+                      gesture-handler>
             </a-sphere>
 
         </a-marker>
 
-        <a-entity camera></a-entity>
+        <!-- Camera with Zoom and Drag Controls -->
+        <a-entity camera zoom-control look-controls drag-look-controls></a-entity>
 
-        <!-- Asset Textures -->
+        <!-- Assets for textures -->
         <a-assets>
-            <img id="buildingTexture" src="building.jpg" crossorigin="anonymous">
-            <img id="car1Texture" src="car1.jpg" crossorigin="anonymous">
-            <img id="car2Texture" src="car2.jpg" crossorigin="anonymous">
-            <img id="droneTexture" src="drone.jpg" crossorigin="anonymous">
+            <img id="buildingTexture" src="building.jpg" crossorigin="anonymous" />
+            <img id="car1Texture" src="car1.jpg" crossorigin="anonymous" />
+            <img id="car2Texture" src="car2.jpg" crossorigin="anonymous" />
+            <img id="droneTexture" src="drone.jpg" crossorigin="anonymous" />
         </a-assets>
-
     </a-scene>
-
-    <!-- Gesture Handler Script -->
-    <script>
-        AFRAME.registerComponent('simple-gesture-handler', {
-            init: function () {
-                const el = this.el;
-                let isScaledUp = false;
-                const originalScale = el.object3D.scale.clone();
-
-                // Tap to toggle scale for zoom in/out effect
-                el.addEventListener('click', () => {
-                    if (isScaledUp) {
-                        el.object3D.scale.copy(originalScale);  // Reset to original scale
-                    } else {
-                        el.object3D.scale.set(1.5, 1.5, 1.5);  // Scale up
-                    }
-                    isScaledUp = !isScaledUp;
-                });
-
-                // Dragging (move left or right)
-                el.addEventListener('mousedown', (evt) => {
-                    this.startX = evt.clientX;
-                    this.startPosition = el.object3D.position.x;
-                    this.isDragging = true;
-                });
-
-                el.addEventListener('mousemove', (evt) => {
-                    if (this.isDragging) {
-                        const deltaX = (evt.clientX - this.startX) * 0.001;
-                        el.object3D.position.x = this.startPosition + deltaX;
-                    }
-                });
-
-                el.addEventListener('mouseup', () => this.isDragging = false);
-
-                // Touch dragging support for mobile Safari
-                el.addEventListener('touchstart', (evt) => {
-                    if (evt.touches.length === 1) {
-                        this.startX = evt.touches[0].clientX;
-                        this.startPosition = el.object3D.position.x;
-                        this.isDragging = true;
-                    }
-                });
-
-                el.addEventListener('touchmove', (evt) => {
-                    if (this.isDragging && evt.touches.length === 1) {
-                        const deltaX = (evt.touches[0].clientX - this.startX) * 0.001;
-                        el.object3D.position.x = this.startPosition + deltaX;
-                    }
-                });
-
-                el.addEventListener('touchend', () => this.isDragging = false);
-            }
-        });
-    </script>
-
 </body>
 </html>
