@@ -9,25 +9,51 @@
 <body style="margin: 0; overflow: hidden;">
 
     <a-scene embedded arjs>
-        <!-- Marker for the AR Object -->
+        <!-- Marker for the AR Objects -->
         <a-marker type="pattern" url="pattern-marker.patt">
-            <!-- Floating Island as a Torus Shape -->
-            <a-torus id="floatingCity" 
-                     position="0 0.5 0" 
-                     radius="1" 
-                     radius-tubular="0.3" 
-                     rotation="0 0 0" 
-                     scale="0.8 0.8 0.8" 
-                     src="#islandTexture" 
-                     gesture-handler>
-            </a-torus>
+
+            <!-- Building -->
+            <a-box id="building"
+                   position="0 0.5 0"
+                   depth="0.5" height="1.5" width="0.5"
+                   src="#buildingTexture"
+                   gesture-handler>
+            </a-box>
+
+            <!-- Car 1 -->
+            <a-box id="car1"
+                   position="0.8 0.3 -0.5"
+                   depth="0.3" height="0.3" width="0.6"
+                   src="#car1Texture"
+                   gesture-handler>
+            </a-box>
+
+            <!-- Car 2 -->
+            <a-box id="car2"
+                   position="-0.8 0.3 -0.5"
+                   depth="0.3" height="0.3" width="0.6"
+                   src="#car2Texture"
+                   gesture-handler>
+            </a-box>
+
+            <!-- Drone (Sphere) -->
+            <a-sphere id="drone"
+                      position="0 1.2 -0.5"
+                      radius="0.2"
+                      src="#droneTexture"
+                      gesture-handler>
+            </a-sphere>
+
         </a-marker>
 
         <a-entity camera></a-entity>
 
-        <!-- Include the Texture as an Asset -->
+        <!-- Asset Textures -->
         <a-assets>
-            <img id="islandTexture" src="island.jpg" crossorigin="anonymous">
+            <img id="buildingTexture" src="building.jpg" crossorigin="anonymous">
+            <img id="car1Texture" src="car1.jpg" crossorigin="anonymous">
+            <img id="car2Texture" src="car2.jpg" crossorigin="anonymous">
+            <img id="droneTexture" src="drone.jpg" crossorigin="anonymous">
         </a-assets>
 
     </a-scene>
@@ -37,26 +63,27 @@
         AFRAME.registerComponent('gesture-handler', {
             init: function () {
                 const el = this.el;
-                let isRotating = false;
+                let isInteracting = false;
 
-                // Rotate the model when clicked or tapped
+                // Toggle rotation on click or touch
                 el.addEventListener('click', () => {
-                    isRotating = !isRotating;
+                    isInteracting = !isInteracting;
                 });
 
                 el.addEventListener('touchstart', (e) => {
-                    e.preventDefault();  // Prevent default touch behavior
-                    isRotating = true;
+                    e.preventDefault();
+                    isInteracting = true;
                 });
 
                 el.addEventListener('touchend', () => {
-                    isRotating = false;
+                    isInteracting = false;
                 });
 
-                // Continuous Rotation when activated
+                // Continuous interaction when activated
                 this.el.sceneEl.addEventListener('tick', () => {
-                    if (isRotating) {
-                        el.object3D.rotation.y += 0.02;
+                    if (isInteracting) {
+                        el.object3D.rotation.y += 0.02;  // Rotate around the Y-axis
+                        el.object3D.position.y += Math.sin(Date.now() * 0.002) * 0.005; // Floating effect
                     }
                 });
             }
