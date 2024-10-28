@@ -7,52 +7,78 @@
     <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/aframe/build/aframe-ar.js"></script>
 
-    <!-- Basic Gesture and Zoom Control Scripts -->
+    <!-- Basic Gesture Control Script -->
     <script>
         AFRAME.registerComponent('gesture-handler', {
             init: function () {
                 const el = this.el;
+                let isScaledUp = false;
+                const initialScale = el.object3D.scale.clone();
 
-                // Click to toggle rotation speed
+                // Toggle scale on click to simulate zoom
                 el.addEventListener('click', function () {
-                    const currentSpeed = el.getAttribute('animation').dur;
-                    const newSpeed = currentSpeed === "10000" ? "3000" : "10000";
-                    el.setAttribute('animation', 'dur', newSpeed);
-                });
-            }
-        });
-
-        AFRAME.registerComponent('zoom-control', {
-            init: function () {
-                const camera = this.el;
-                let zoomLevel = 1;
-
-                // Wheel event for zoom
-                window.addEventListener('wheel', function (event) {
-                    zoomLevel += event.deltaY * -0.01;
-                    zoomLevel = Math.min(Math.max(zoomLevel, 0.5), 2); // Limit zoom
-                    camera.setAttribute('camera', 'zoom', zoomLevel);
+                    if (isScaledUp) {
+                        el.object3D.scale.copy(initialScale);  // Reset to original scale
+                    } else {
+                        el.object3D.scale.set(1.5, 1.5, 1.5);  // Scale up
+                    }
+                    isScaledUp = !isScaledUp;
                 });
 
-                // Touch zoom for mobile
-                let initialDistance = null;
-                window.addEventListener('touchmove', function (event) {
-                    if (event.touches.length === 2) {
-                        const dx = event.touches[0].clientX - event.touches[1].clientX;
-                        const dy = event.touches[0].clientY - event.touches[1].clientY;
-                        const distance = Math.sqrt(dx * dx + dy * dy);
+                // Variables for drag behavior
+                let isDragging = false;
+                let startX = 0;
+                let startY = 0;
 
-                        if (initialDistance) {
-                            zoomLevel += (distance - initialDistance) * 0.001;
-                            zoomLevel = Math.min(Math.max(zoomLevel, 0.5), 2);
-                            camera.setAttribute('camera', 'zoom', zoomLevel);
-                        }
-                        initialDistance = distance;
+                // Touch start to initiate drag
+                el.addEventListener('mousedown', function (evt) {
+                    isDragging = true;
+                    startX = evt.clientX;
+                    startY = evt.clientY;
+                });
+
+                el.addEventListener('mousemove', function (evt) {
+                    if (isDragging) {
+                        const deltaX = (evt.clientX - startX) * 0.001;
+                        const deltaY = (evt.clientY - startY) * 0.001;
+
+                        el.object3D.position.x += deltaX;
+                        el.object3D.position.y -= deltaY;
+
+                        startX = evt.clientX;
+                        startY = evt.clientY;
                     }
                 });
 
-                window.addEventListener('touchend', function () {
-                    initialDistance = null;
+                // End drag on mouse up
+                el.addEventListener('mouseup', function () {
+                    isDragging = false;
+                });
+
+                // Touch events for mobile drag
+                el.addEventListener('touchstart', function (evt) {
+                    if (evt.touches.length === 1) {
+                        isDragging = true;
+                        startX = evt.touches[0].clientX;
+                        startY = evt.touches[0].clientY;
+                    }
+                });
+
+                el.addEventListener('touchmove', function (evt) {
+                    if (isDragging && evt.touches.length === 1) {
+                        const deltaX = (evt.touches[0].clientX - startX) * 0.001;
+                        const deltaY = (evt.touches[0].clientY - startY) * 0.001;
+
+                        el.object3D.position.x += deltaX;
+                        el.object3D.position.y -= deltaY;
+
+                        startX = evt.touches[0].clientX;
+                        startY = evt.touches[0].clientY;
+                    }
+                });
+
+                el.addEventListener('touchend', function () {
+                    isDragging = false;
                 });
             }
         });
@@ -66,37 +92,33 @@
 
         <!-- Custom Marker for AR objects -->
         <a-marker type="pattern" url="pattern-marker.patt">
-            <!-- Building with texture and rotation -->
+            <!-- Building with texture -->
             <a-box id="building" position="0 0.5 0" depth="0.5" height="1.5" width="0.5"
                    material="src: #buildingTexture" 
-                   animation="property: rotation; to: 0 360 0; loop: true; dur: 10000"
                    gesture-handler>
             </a-box>
 
-            <!-- Car 1 with texture and rotation -->
+            <!-- Car 1 with texture -->
             <a-box id="car1" position="1 0.3 -0.5" depth="0.3" height="0.3" width="0.6"
                    material="src: #car1Texture" 
-                   animation="property: rotation; to: 0 360 0; loop: true; dur: 8000"
                    gesture-handler>
             </a-box>
 
-            <!-- Car 2 with texture and rotation -->
+            <!-- Car 2 with texture -->
             <a-box id="car2" position="-1 0.3 -0.5" depth="0.3" height="0.3" width="0.6"
                    material="src: #car2Texture" 
-                   animation="property: rotation; to: 0 360 0; loop: true; dur: 12000"
                    gesture-handler>
             </a-box>
 
-            <!-- Drone (Sphere) with texture and rotation -->
+            <!-- Drone (Sphere) with texture -->
             <a-sphere id="drone" position="0 1.2 -0.5" radius="0.2"
                       material="src: #droneTexture" 
-                      animation="property: rotation; to: 0 360 0; loop: true; dur: 15000"
                       gesture-handler>
             </a-sphere>
         </a-marker>
 
-        <!-- Camera with zoom control -->
-        <a-entity camera zoom-control></a-entity>
+        <!-- Camera -->
+        <a-entity camera></a-entity>
 
         <!-- Assets for textures -->
         <a-assets>
