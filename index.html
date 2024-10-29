@@ -7,7 +7,7 @@
     <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.3.2/aframe/build/aframe-ar.js"></script>
 
-    <!-- Custom Rotate-in-Place and Zoom Component with Reset Feature -->
+    <!-- Custom Rotate and Pinch-to-Zoom Component -->
     <script>
     AFRAME.registerComponent('rotate-and-zoom', {
         schema: { speed: { type: 'number', default: 1 } },
@@ -16,48 +16,66 @@
             this.startPosition = { x: 0, y: 0 };
             this.rotation = { x: 0, y: 0 };
             this.originalPosition = this.el.object3D.position.clone();
+            this.initialScale = this.el.object3D.scale.clone();
 
-            // Mouse down event for starting rotation
-            this.el.sceneEl.addEventListener('mousedown', (evt) => {
-                this.isRotating = true;
-                this.startPosition.x = evt.screenX;
-                this.startPosition.y = evt.screenY;
-                this.rotation.x = this.el.object3D.rotation.x;
-                this.rotation.y = this.el.object3D.rotation.y;
-            });
+            // Variables for pinch-to-zoom
+            this.isPinching = false;
+            this.initialPinchDistance = 0;
 
-            // Mouse move event for rotating the object
-            this.el.sceneEl.addEventListener('mousemove', (evt) => {
-                if (this.isRotating) {
-                    const deltaX = (evt.screenX - this.startPosition.x) * this.data.speed / 250;
-                    const deltaY = (evt.screenY - this.startPosition.y) * this.data.speed / 250;
+            // Start rotation or zoom
+            const startInteraction = (evt) => {
+                if (evt.touches && evt.touches.length === 2) {
+                    this.isPinching = true;
+                    this.initialPinchDistance = this.getPinchDistance(evt);
+                } else if (evt.touches && evt.touches.length === 1) {
+                    this.isRotating = true;
+                    this.startPosition.x = evt.touches[0].clientX;
+                    this.startPosition.y = evt.touches[0].clientY;
+                    this.rotation.x = this.el.object3D.rotation.x;
+                    this.rotation.y = this.el.object3D.rotation.y;
+                }
+            };
+
+            // Calculate pinch distance
+            this.getPinchDistance = (evt) => {
+                const dx = evt.touches[0].clientX - evt.touches[1].clientX;
+                const dy = evt.touches[0].clientY - evt.touches[1].clientY;
+                return Math.sqrt(dx * dx + dy * dy);
+            };
+
+            // Perform rotation and pinch-to-zoom
+            const handleInteraction = (evt) => {
+                if (this.isRotating && evt.touches.length === 1) {
+                    const deltaX = (evt.touches[0].clientX - this.startPosition.x) * this.data.speed / 250;
+                    const deltaY = (evt.touches[0].clientY - this.startPosition.y) * this.data.speed / 250;
                     this.el.object3D.rotation.y = this.rotation.y + deltaX;
                     this.el.object3D.rotation.x = this.rotation.x + deltaY;
+                } else if (this.isPinching && evt.touches.length === 2) {
+                    const newPinchDistance = this.getPinchDistance(evt);
+                    const scaleChange = newPinchDistance / this.initialPinchDistance;
+                    this.el.object3D.scale.multiplyScalar(scaleChange);
+                    this.initialPinchDistance = newPinchDistance; // Update distance for smooth zoom
                 }
-            });
+            };
 
-            // Mouse up event to stop rotation
-            this.el.sceneEl.addEventListener('mouseup', () => {
+            // End rotation or zoom
+            const endInteraction = () => {
                 this.isRotating = false;
-            });
+                this.isPinching = false;
+            };
 
-            // Mouse wheel event for zooming in and out
-            this.el.sceneEl.addEventListener('wheel', (evt) => {
-                evt.preventDefault();
-                const scaleFactor = 1 - evt.deltaY * 0.001;
-                this.el.object3D.scale.multiplyScalar(scaleFactor);
-            });
+            // Reset object position and scale
+            this.resetObject = () => {
+                this.el.object3D.rotation.set(0, 0, 0);
+                this.el.object3D.scale.copy(this.initialScale);
+                this.el.object3D.position.copy(this.originalPosition);
+            };
 
-            // Double-click event to reset the object
-            this.el.sceneEl.addEventListener('dblclick', () => {
-                this.resetObject();
-            });
-        },
-
-        resetObject: function () {
-            this.el.object3D.rotation.set(0, 0, 0);
-            this.el.object3D.scale.set(1, 1, 1);
-            this.el.object3D.position.copy(this.originalPosition);
+            // Adding event listeners
+            this.el.sceneEl.addEventListener('touchstart', startInteraction);
+            this.el.sceneEl.addEventListener('touchmove', handleInteraction);
+            this.el.sceneEl.addEventListener('touchend', endInteraction);
+            this.el.sceneEl.addEventListener('dblclick', this.resetObject.bind(this));
         }
     });
     </script>
