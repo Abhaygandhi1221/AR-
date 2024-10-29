@@ -10,15 +10,14 @@
     <!-- Custom Rotate-in-Place and Zoom Component with Reset Feature -->
     <script>
     AFRAME.registerComponent('rotate-and-zoom', {
-        schema: { speed: { default: 1 } },
+        schema: { speed: { type: 'number', default: 1 } },
         init: function () {
             this.isRotating = false;
             this.startPosition = { x: 0, y: 0 };
             this.rotation = { x: 0, y: 0 };
             this.originalPosition = this.el.object3D.position.clone();
-            this.initialDistance = 0;
-            this.currentScale = this.el.object3D.scale.clone();
 
+            // Mouse down event for starting rotation
             this.el.sceneEl.addEventListener('mousedown', (evt) => {
                 this.isRotating = true;
                 this.startPosition.x = evt.screenX;
@@ -27,25 +26,29 @@
                 this.rotation.y = this.el.object3D.rotation.y;
             });
 
+            // Mouse move event for rotating the object
             this.el.sceneEl.addEventListener('mousemove', (evt) => {
                 if (this.isRotating) {
                     const deltaX = (evt.screenX - this.startPosition.x) * this.data.speed / 250;
                     const deltaY = (evt.screenY - this.startPosition.y) * this.data.speed / 250;
                     this.el.object3D.rotation.y = this.rotation.y + deltaX;
                     this.el.object3D.rotation.x = this.rotation.x + deltaY;
-                    this.el.object3D.position.copy(this.originalPosition);
                 }
             });
 
+            // Mouse up event to stop rotation
             this.el.sceneEl.addEventListener('mouseup', () => {
                 this.isRotating = false;
             });
 
+            // Mouse wheel event for zooming in and out
             this.el.sceneEl.addEventListener('wheel', (evt) => {
+                evt.preventDefault();
                 const scaleFactor = 1 - evt.deltaY * 0.001;
                 this.el.object3D.scale.multiplyScalar(scaleFactor);
             });
 
+            // Double-click event to reset the object
             this.el.sceneEl.addEventListener('dblclick', () => {
                 this.resetObject();
             });
@@ -54,6 +57,7 @@
         resetObject: function () {
             this.el.object3D.rotation.set(0, 0, 0);
             this.el.object3D.scale.set(1, 1, 1);
+            this.el.object3D.position.copy(this.originalPosition);
         }
     });
     </script>
