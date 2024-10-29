@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>AR Building</title>
+    <title>AR Pyramid</title>
     <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.3.2/aframe/build/aframe-ar.js"></script>
 
@@ -16,14 +16,10 @@
             this.startPosition = { x: 0, y: 0 };
             this.rotation = { x: 0, y: 0 };
 
-            // Save original position to prevent drifting
             this.originalPosition = this.el.object3D.position.clone();
-
-            // Handle scaling (zooming)
             this.initialDistance = 0;
             this.currentScale = this.el.object3D.scale.clone();
 
-            // Mouse interaction (Desktop)
             this.el.sceneEl.addEventListener('mousedown', (evt) => {
                 this.isRotating = true;
                 this.startPosition.x = evt.screenX;
@@ -36,10 +32,8 @@
                 if (this.isRotating) {
                     const deltaX = (evt.screenX - this.startPosition.x) * this.data.speed / 250;
                     const deltaY = (evt.screenY - this.startPosition.y) * this.data.speed / 250;
-                    // Apply both Y (side-to-side) and X (up-down) rotations
-                    this.el.object3D.rotation.y = this.rotation.y + deltaX; // Y-axis rotation
-                    this.el.object3D.rotation.x = this.rotation.x + deltaY; // X-axis rotation
-                    // Fix object's position after rotation to prevent drifting
+                    this.el.object3D.rotation.y = this.rotation.y + deltaX;
+                    this.el.object3D.rotation.x = this.rotation.x + deltaY;
                     this.el.object3D.position.copy(this.originalPosition);
                 }
             });
@@ -48,100 +42,42 @@
                 this.isRotating = false;
             });
 
-            // Touch interaction (Mobile)
-            this.el.sceneEl.addEventListener('touchstart', (evt) => {
-                if (evt.touches.length === 2) {
-                    // Two fingers means pinch start
-                    this.initialDistance = this.getDistance(evt.touches[0], evt.touches[1]);
-                    this.currentScale = this.el.object3D.scale.clone();
-                } else if (evt.touches.length === 1) {
-                    // Single finger for rotation
-                    this.isRotating = true;
-                    this.startPosition.x = evt.touches[0].screenX;
-                    this.startPosition.y = evt.touches[0].screenY;
-                    this.rotation.x = this.el.object3D.rotation.x;
-                    this.rotation.y = this.el.object3D.rotation.y;
-                }
-            });
-
-            this.el.sceneEl.addEventListener('touchmove', (evt) => {
-                if (evt.touches.length === 2) {
-                    // Pinch to zoom
-                    const newDistance = this.getDistance(evt.touches[0], evt.touches[1]);
-                    const scaleChange = newDistance / this.initialDistance;
-                    this.el.object3D.scale.set(
-                        this.currentScale.x * scaleChange,
-                        this.currentScale.y * scaleChange,
-                        this.currentScale.z * scaleChange
-                    );
-                } else if (this.isRotating) {
-                    const deltaX = (evt.touches[0].screenX - this.startPosition.x) * this.data.speed / 250;
-                    const deltaY = (evt.touches[0].screenY - this.startPosition.y) * this.data.speed / 250;
-                    // Apply both Y (side-to-side) and X (up-down) rotations
-                    this.el.object3D.rotation.y = this.rotation.y + deltaX; // Y-axis rotation
-                    this.el.object3D.rotation.x = this.rotation.x + deltaY; // X-axis rotation
-                    // Fix object's position after rotation to prevent drifting
-                    this.el.object3D.position.copy(this.originalPosition);
-                }
-            });
-
-            this.el.sceneEl.addEventListener('touchend', () => {
-                this.isRotating = false;
-            });
-
-            // Mouse scroll for zooming on desktop
             this.el.sceneEl.addEventListener('wheel', (evt) => {
-                const scaleFactor = 1 - evt.deltaY * 0.001; // Adjust scale based on wheel scroll
+                const scaleFactor = 1 - evt.deltaY * 0.001;
                 this.el.object3D.scale.multiplyScalar(scaleFactor);
             });
 
-            // Ensure the position remains fixed after any rotation change
             this.el.addEventListener('componentchanged', (evt) => {
                 if (evt.detail.name === 'rotation') {
                     this.el.object3D.position.copy(this.originalPosition);
                 }
             });
 
-            // Double-tap or double-click to reset rotation and scale
             this.el.sceneEl.addEventListener('dblclick', () => {
                 this.resetObject();
             });
-
-            this.el.sceneEl.addEventListener('dbltap', () => {
-                this.resetObject();
-            });
         },
 
-        // Reset the object's scale and rotation
         resetObject: function () {
             this.el.object3D.rotation.set(0, 0, 0);
             this.el.object3D.scale.set(1, 1, 1);
-        },
-
-        // Helper function to calculate distance between two touch points
-        getDistance: function (touch1, touch2) {
-            const dx = touch1.screenX - touch2.screenX;
-            const dy = touch1.screenY - touch2.screenY;
-            return Math.sqrt(dx * dx + dy * dy);
         }
     });
     </script>
 </head>
 <body style="margin: 0; overflow: hidden;">
     <a-scene embedded arjs>
-        <!-- Global Lighting for the Scene -->
         <a-light type="ambient" color="#ffffff" intensity="0.5"></a-light>
         <a-light type="directional" position="2 4 5" intensity="1" castShadow="true"></a-light>
 
-        <!-- Marker (Ensure Barcode.patt is correctly uploaded) -->
+        <!-- Marker -->
         <a-marker type="pattern" url="Barcode.patt">
-            <!-- Stationary Building that rotates and zooms in place -->
-            <a-box id="building" position="0 0.5 0" depth="1.5" height="3" width="1.5"
-                   material="src: url(building.jpg);" 
-                   rotate-and-zoom></a-box>
+            <!-- Pyramid -->
+            <a-cone id="pyramid" position="0 0.5 0" radius-bottom="1" height="2"
+                    material="src: url(pyramid-texture.jpg);"
+                    rotate-and-zoom></a-cone>
         </a-marker>
 
-        <!-- Camera -->
         <a-entity camera look-controls></a-entity>
     </a-scene>
 </body>
