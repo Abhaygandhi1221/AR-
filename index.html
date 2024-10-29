@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>AR Pyramid</title>
+    <title>AR 3D Triangle</title>
     <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.3.2/aframe/build/aframe-ar.js"></script>
 
@@ -72,10 +72,10 @@
 
         <!-- Marker -->
         <a-marker type="pattern" url="pattern-marker.patt">
-            <!-- Pyramid -->
-            <a-cone id="pyramid" position="0 0.5 0" radius-bottom="1" height="2"
-                    material="src: url(building.jpg);"
-                    rotate-and-zoom></a-cone>
+            <!-- 3D Triangle (Tetrahedron) -->
+            <a-entity id="triangle" rotate-and-zoom
+                      geometry="primitive: tetrahedron; radius: 1"
+                      material="color: #4CC3D9;"></a-entity>
         </a-marker>
 
         <a-entity camera look-controls></a-entity>
