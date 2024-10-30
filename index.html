@@ -7,46 +7,39 @@
     <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.3.2/aframe/build/aframe-ar.js"></script>
 
-    <!-- Simple Pinch-to-Zoom Component -->
+    <!-- Rotation Only Component -->
     <script>
-    AFRAME.registerComponent('pinch-to-zoom', {
+    AFRAME.registerComponent('rotate-only', {
+        schema: { speed: { default: 1 } },
         init: function () {
-            this.isPinching = false;
-            this.initialPinchDistance = 0;
-            this.initialScale = this.el.object3D.scale.clone();
+            this.isRotating = false;
+            this.startPosition = { x: 0, y: 0 };
+            this.rotation = { x: 0, y: 0 };
 
-            // Get the distance between two touch points
-            this.getPinchDistance = function (evt) {
-                const dx = evt.touches[0].clientX - evt.touches[1].clientX;
-                const dy = evt.touches[0].clientY - evt.touches[1].clientY;
-                return Math.sqrt(dx * dx + dy * dy);
-            };
-
-            // Start pinch-to-zoom
+            // Start rotation on touch
             this.el.sceneEl.addEventListener('touchstart', (evt) => {
-                if (evt.touches.length === 2) {
-                    this.isPinching = true;
-                    this.initialPinchDistance = this.getPinchDistance(evt);
-                    this.initialScale.copy(this.el.object3D.scale);
+                if (evt.touches.length === 1) {  // Single-touch only for rotation
+                    this.isRotating = true;
+                    this.startPosition.x = evt.touches[0].clientX;
+                    this.startPosition.y = evt.touches[0].clientY;
+                    this.rotation.x = this.el.object3D.rotation.x;
+                    this.rotation.y = this.el.object3D.rotation.y;
                 }
             });
 
-            // Adjust scale based on pinch movement
+            // Rotate the object on touch move
             this.el.sceneEl.addEventListener('touchmove', (evt) => {
-                if (this.isPinching && evt.touches.length === 2) {
-                    const newPinchDistance = this.getPinchDistance(evt);
-                    const scaleChange = newPinchDistance / this.initialPinchDistance;
-                    this.el.object3D.scale.set(
-                        this.initialScale.x * scaleChange,
-                        this.initialScale.y * scaleChange,
-                        this.initialScale.z * scaleChange
-                    );
+                if (this.isRotating && evt.touches.length === 1) {
+                    const deltaX = (evt.touches[0].clientX - this.startPosition.x) * this.data.speed / 250;
+                    const deltaY = (evt.touches[0].clientY - this.startPosition.y) * this.data.speed / 250;
+                    this.el.object3D.rotation.y = this.rotation.y + deltaX;
+                    this.el.object3D.rotation.x = this.rotation.x + deltaY;
                 }
             });
 
-            // End pinch-to-zoom
+            // End rotation on touch end
             this.el.sceneEl.addEventListener('touchend', () => {
-                this.isPinching = false;
+                this.isRotating = false;
             });
         }
     });
@@ -59,12 +52,12 @@
 
         <!-- Marker -->
         <a-marker type="pattern" url="pattern-marker.patt">
-            <!-- 3D Triangle (Tetrahedron) with Pinch-to-Zoom -->
+            <!-- 3D Triangle (Tetrahedron) -->
             <a-entity id="triangle"
                       geometry="primitive: tetrahedron; radius: 1"
                       material="src: url(pyramid.jpg);"
                       position="0 0.5 0"
-                      pinch-to-zoom></a-entity>
+                      rotate-only></a-entity>
         </a-marker>
 
         <a-entity camera look-controls></a-entity>
